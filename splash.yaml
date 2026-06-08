@@ -1,0 +1,12 @@
+flutter_native_splash:
+  android: true
+  ios: true
+  color: "#ffffff"
+  image: "assets/images/Splash_Screen_Logo-01.png"
+  branding: "assets/images/Splash_Branding_logo-01.png"
+
+  android_gravity: fill   # full screen on pre-Android 12
+  android_12:
+    color: "#ffffff"
+    image: "assets/images/Splash_Screen_Logo-01.png"
+    branding: "assets/images/Splash_Branding_logo-01.png"

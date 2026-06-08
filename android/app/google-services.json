@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "166141311289",
+    "project_id": "guardly-90957",
+    "storage_bucket": "guardly-90957.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:166141311289:android:4dd1a06a30d2943b6290e8",
+        "android_client_info": {
+          "package_name": "com.example.parental_control_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBcb1ypfsJ_IbDNdPQVXLjsi6_t8Nb-7P4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
