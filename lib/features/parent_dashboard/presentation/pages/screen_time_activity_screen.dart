@@ -26,8 +26,10 @@ class ScreenTimeActivityScreen extends StatefulWidget {
 
 class _ScreenTimeActivityScreenState extends State<ScreenTimeActivityScreen> {
   final ParentDashboardFirebaseService _firebaseService = ParentDashboardFirebaseService();
-  String _selectedView = 'Today'; // Today, Weekly, Monthly
+  String _selectedView = 'Today';
   bool _showByCategory = true;
+
+  static const double _barAreaHeight = 200.0;
 
   @override
   Widget build(BuildContext context) {
@@ -67,12 +69,8 @@ class _ScreenTimeActivityScreenState extends State<ScreenTimeActivityScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // View Selector (Today, Weekly, Monthly)
                 _buildViewSelector(),
-                
                 const SizedBox(height: AppDesignSystem.spacingL),
-                
-                // Main Content based on selected view
                 if (_selectedView == 'Today') ...[
                   _buildTodayView(userApps),
                 ] else if (_selectedView == 'Weekly') ...[
@@ -80,10 +78,7 @@ class _ScreenTimeActivityScreenState extends State<ScreenTimeActivityScreen> {
                 ] else if (_selectedView == 'Monthly') ...[
                   _buildMonthlyView(userApps),
                 ],
-                
                 const SizedBox(height: AppDesignSystem.spacingXL),
-                
-                // Most Used Apps Section
                 _buildMostUsedAppsSection(userApps),
               ],
             ),
@@ -149,7 +144,6 @@ class _ScreenTimeActivityScreenState extends State<ScreenTimeActivityScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Today's Total Time
         Container(
           padding: const EdgeInsets.all(AppDesignSystem.spacingL),
           decoration: BoxDecoration(
@@ -175,22 +169,14 @@ class _ScreenTimeActivityScreenState extends State<ScreenTimeActivityScreen> {
               const SizedBox(height: 8),
               Text(
                 "Today's Usage",
-                style: AppDesignSystem.bodyLarge.copyWith(
-                  color: AppColors.textLight,
-                ),
+                style: AppDesignSystem.bodyLarge.copyWith(color: AppColors.textLight),
               ),
             ],
           ),
         ),
-        
         const SizedBox(height: AppDesignSystem.spacingL),
-        
-        // Donut Chart
         _buildDonutChart(categoryData, totalMinutes),
-        
         const SizedBox(height: AppDesignSystem.spacingL),
-        
-        // Category Legend
         _buildCategoryLegend(categoryData),
       ],
     );
@@ -198,11 +184,10 @@ class _ScreenTimeActivityScreenState extends State<ScreenTimeActivityScreen> {
 
   Widget _buildWeeklyView(List<AppUsageFirebase> apps) {
     final weeklyData = _getWeeklyData(apps);
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Weekly Summary
         Container(
           padding: const EdgeInsets.all(AppDesignSystem.spacingL),
           decoration: BoxDecoration(
@@ -219,16 +204,11 @@ class _ScreenTimeActivityScreenState extends State<ScreenTimeActivityScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'This Week',
-                style: AppDesignSystem.headline2,
-              ),
+              Text('This Week', style: AppDesignSystem.headline2),
               const SizedBox(height: 8),
               Text(
                 _formatTotalTime(weeklyData['totalMinutes'] as int),
-                style: AppDesignSystem.headline3.copyWith(
-                  color: AppColors.darkCyan,
-                ),
+                style: AppDesignSystem.headline3.copyWith(color: AppColors.darkCyan),
               ),
               const SizedBox(height: 8),
               Row(
@@ -239,19 +219,13 @@ class _ScreenTimeActivityScreenState extends State<ScreenTimeActivityScreen> {
                     activeThumbColor: AppColors.darkCyan,
                   ),
                   const SizedBox(width: 8),
-                  Text(
-                    'Show by Category',
-                    style: AppDesignSystem.bodyMedium,
-                  ),
+                  Text('Show by Category', style: AppDesignSystem.bodyMedium),
                 ],
               ),
             ],
           ),
         ),
-        
         const SizedBox(height: AppDesignSystem.spacingL),
-        
-        // Weekly Stacked Bar Chart
         _buildWeeklyStackedBarChart(weeklyData),
       ],
     );
@@ -259,11 +233,10 @@ class _ScreenTimeActivityScreenState extends State<ScreenTimeActivityScreen> {
 
   Widget _buildMonthlyView(List<AppUsageFirebase> apps) {
     final monthlyData = _getMonthlyData(apps);
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Monthly Summary
         Container(
           padding: const EdgeInsets.all(AppDesignSystem.spacingL),
           decoration: BoxDecoration(
@@ -280,24 +253,16 @@ class _ScreenTimeActivityScreenState extends State<ScreenTimeActivityScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'This Month',
-                style: AppDesignSystem.headline2,
-              ),
+              Text('This Month', style: AppDesignSystem.headline2),
               const SizedBox(height: 8),
               Text(
                 _formatTotalTime(monthlyData['totalMinutes'] as int),
-                style: AppDesignSystem.headline3.copyWith(
-                  color: AppColors.darkCyan,
-                ),
+                style: AppDesignSystem.headline3.copyWith(color: AppColors.darkCyan),
               ),
             ],
           ),
         ),
-        
         const SizedBox(height: AppDesignSystem.spacingL),
-        
-        // Monthly Bar Chart
         _buildMonthlyBarChart(monthlyData),
       ],
     );
@@ -327,9 +292,7 @@ class _ScreenTimeActivityScreenState extends State<ScreenTimeActivityScreen> {
               const SizedBox(height: 16),
               Text(
                 'No usage data for today',
-                style: AppDesignSystem.bodyLarge.copyWith(
-                  color: AppColors.textLight,
-                ),
+                style: AppDesignSystem.bodyLarge.copyWith(color: AppColors.textLight),
               ),
             ],
           ),
@@ -400,10 +363,7 @@ class _ScreenTimeActivityScreenState extends State<ScreenTimeActivityScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Usage by Category',
-            style: AppDesignSystem.headline3,
-          ),
+          Text('Usage by Category', style: AppDesignSystem.headline3),
           const SizedBox(height: AppDesignSystem.spacingM),
           ...entries.map((entry) => _buildLegendItem(entry.key, entry.value)),
         ],
@@ -414,7 +374,7 @@ class _ScreenTimeActivityScreenState extends State<ScreenTimeActivityScreen> {
   Widget _buildLegendItem(AppCategory category, int minutes) {
     final color = Color(AppCategoryHelper.getCategoryColor(category));
     final categoryName = AppCategoryHelper.getCategoryName(category);
-    
+
     return Padding(
       padding: const EdgeInsets.only(bottom: AppDesignSystem.spacingM),
       child: Row(
@@ -422,18 +382,10 @@ class _ScreenTimeActivityScreenState extends State<ScreenTimeActivityScreen> {
           Container(
             width: 16,
             height: 16,
-            decoration: BoxDecoration(
-              color: color,
-              shape: BoxShape.circle,
-            ),
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
           ),
           const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              categoryName,
-              style: AppDesignSystem.bodyMedium,
-            ),
-          ),
+          Expanded(child: Text(categoryName, style: AppDesignSystem.bodyMedium)),
           Text(
             _formatDuration(minutes),
             style: AppDesignSystem.bodyMedium.copyWith(
@@ -446,9 +398,11 @@ class _ScreenTimeActivityScreenState extends State<ScreenTimeActivityScreen> {
     );
   }
 
+  // ── WEEKLY CHART ─────────────────────────────────────────────────────────────
+
   Widget _buildWeeklyStackedBarChart(Map<String, dynamic> weeklyData) {
     final dailyData = weeklyData['dailyData'] as List<Map<String, dynamic>>;
-    
+
     if (dailyData.isEmpty) {
       return Container(
         height: 300,
@@ -464,18 +418,15 @@ class _ScreenTimeActivityScreenState extends State<ScreenTimeActivityScreen> {
             ),
           ],
         ),
-        child: const Center(
-          child: Text('No weekly data available'),
-        ),
+        child: const Center(child: Text('No weekly data available')),
       );
     }
 
     final maxMinutes = dailyData
-        .map((day) => (day['totalMinutes'] as int))
+        .map((day) => day['totalMinutes'] as int)
         .reduce((a, b) => a > b ? a : b);
 
     return Container(
-      height: 350,
       padding: const EdgeInsets.all(AppDesignSystem.spacingL),
       decoration: BoxDecoration(
         color: AppColors.white,
@@ -490,85 +441,93 @@ class _ScreenTimeActivityScreenState extends State<ScreenTimeActivityScreen> {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min, // ← shrink-wrap; no fixed height needed
         children: [
-          Text(
-            'Daily Screen Time',
-            style: AppDesignSystem.headline3,
-          ),
+          Text('Daily Screen Time', style: AppDesignSystem.headline3),
           const SizedBox(height: AppDesignSystem.spacingM),
-          Expanded(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: dailyData.asMap().entries.map((entry) {
-                final day = entry.value;
-                final dayName = day['dayName'] as String;
-                final totalMinutes = day['totalMinutes'] as int;
-                final categoryMinutes = day['categoryMinutes'] as Map<AppCategory, int>;
-                
-                return Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        // Stacked Bar
-                        if (_showByCategory)
-                          _buildStackedBar(categoryMinutes, totalMinutes, maxMinutes)
-                        else
-                          Container(
-                            height: maxMinutes > 0 ? (totalMinutes / maxMinutes) * 250 : 0,
-                            decoration: BoxDecoration(
-                              color: AppColors.darkCyan,
-                              borderRadius: const BorderRadius.vertical(
-                                top: Radius.circular(4),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: dailyData.map((day) {
+              final dayName      = day['dayName']      as String;
+              final totalMinutes = day['totalMinutes'] as int;
+              final categoryMinutes =
+                  day['categoryMinutes'] as Map<AppCategory, int>;
+
+              return Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // ── Fixed-height bar slot ──────────────────────────────
+                      SizedBox(
+                        height: _barAreaHeight,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            if (_showByCategory)
+                              _buildStackedBar(
+                                  categoryMinutes, totalMinutes, maxMinutes)
+                            else
+                              Container(
+                                height: maxMinutes > 0
+                                    ? (totalMinutes / maxMinutes) *
+                                        _barAreaHeight
+                                    : 0,
+                                decoration: BoxDecoration(
+                                  color: AppColors.darkCyan,
+                                  borderRadius: const BorderRadius.vertical(
+                                      top: Radius.circular(4)),
+                                ),
                               ),
-                            ),
-                          ),
-                        const SizedBox(height: 8),
-                        // Day Label
-                        Text(
-                          dayName,
-                          style: AppDesignSystem.labelSmall,
-                          textAlign: TextAlign.center,
+                          ],
                         ),
-                        const SizedBox(height: 4),
-                        // Time Label
-                        Text(
-                          _formatDuration(totalMinutes),
-                          style: AppDesignSystem.labelSmall.copyWith(
-                            fontSize: 10,
-                            color: AppColors.textLight,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
-                    ),
+                      ),
+                      // ── Labels always below bar slot ──────────────────────
+                      const SizedBox(height: 6),
+                      Text(
+                        dayName,
+                        style: AppDesignSystem.labelSmall,
+                        textAlign: TextAlign.center,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        _formatDuration(totalMinutes),
+                        style: AppDesignSystem.labelSmall.copyWith(
+                            fontSize: 9, color: AppColors.textLight),
+                        textAlign: TextAlign.center,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
                   ),
-                );
-              }).toList(),
-            ),
+                ),
+              );
+            }).toList(),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildStackedBar(Map<AppCategory, int> categoryMinutes, int totalMinutes, int maxMinutes) {
+  Widget _buildStackedBar(
+      Map<AppCategory, int> categoryMinutes, int totalMinutes, int maxMinutes) {
     final entries = categoryMinutes.entries
-        .where((entry) => entry.value > 0)
+        .where((e) => e.value > 0)
         .toList()
       ..sort((a, b) => b.value.compareTo(a.value));
 
-    final barHeight = maxMinutes > 0 ? (totalMinutes / maxMinutes) * 250 : 0.0;
+    final barHeight =
+        maxMinutes > 0 ? (totalMinutes / maxMinutes) * _barAreaHeight : 0.0;
 
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: entries.map((entry) {
         final segmentHeight = totalMinutes > 0
             ? (entry.value / totalMinutes) * barHeight
             : 0.0;
         final color = Color(AppCategoryHelper.getCategoryColor(entry.key));
-        
+
         return Container(
           height: segmentHeight,
           decoration: BoxDecoration(
@@ -582,9 +541,11 @@ class _ScreenTimeActivityScreenState extends State<ScreenTimeActivityScreen> {
     );
   }
 
+  // ── MONTHLY CHART ─────────────────────────────────────────────────────────────
+
   Widget _buildMonthlyBarChart(Map<String, dynamic> monthlyData) {
     final weeklyData = monthlyData['weeklyData'] as List<Map<String, dynamic>>;
-    
+
     if (weeklyData.isEmpty) {
       return Container(
         height: 300,
@@ -600,18 +561,15 @@ class _ScreenTimeActivityScreenState extends State<ScreenTimeActivityScreen> {
             ),
           ],
         ),
-        child: const Center(
-          child: Text('No monthly data available'),
-        ),
+        child: const Center(child: Text('No monthly data available')),
       );
     }
 
     final maxMinutes = weeklyData
-        .map((week) => (week['totalMinutes'] as int))
+        .map((week) => week['totalMinutes'] as int)
         .reduce((a, b) => a > b ? a : b);
 
     return Container(
-      height: 350,
       padding: const EdgeInsets.all(AppDesignSystem.spacingL),
       decoration: BoxDecoration(
         color: AppColors.white,
@@ -626,65 +584,69 @@ class _ScreenTimeActivityScreenState extends State<ScreenTimeActivityScreen> {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min, // ← shrink-wrap
         children: [
-          Text(
-            'Weekly Screen Time',
-            style: AppDesignSystem.headline3,
-          ),
+          Text('Weekly Screen Time', style: AppDesignSystem.headline3),
           const SizedBox(height: AppDesignSystem.spacingM),
-          Expanded(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: weeklyData.asMap().entries.map((entry) {
-                final week = entry.value;
-                final weekLabel = week['weekLabel'] as String;
-                final totalMinutes = week['totalMinutes'] as int;
-                
-                return Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        // Bar
-                        Container(
-                          height: maxMinutes > 0 ? (totalMinutes / maxMinutes) * 250 : 0,
-                          decoration: BoxDecoration(
-                            color: AppColors.darkCyan,
-                            borderRadius: const BorderRadius.vertical(
-                              top: Radius.circular(4),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: weeklyData.map((week) {
+              final weekLabel    = week['weekLabel']    as String;
+              final totalMinutes = week['totalMinutes'] as int;
+
+              return Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // ── Fixed-height bar slot ──────────────────────────────
+                      SizedBox(
+                        height: _barAreaHeight,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            Container(
+                              height: maxMinutes > 0
+                                  ? (totalMinutes / maxMinutes) * _barAreaHeight
+                                  : 0,
+                              decoration: BoxDecoration(
+                                color: AppColors.darkCyan,
+                                borderRadius: const BorderRadius.vertical(
+                                    top: Radius.circular(4)),
+                              ),
                             ),
-                          ),
+                          ],
                         ),
-                        const SizedBox(height: 8),
-                        // Week Label
-                        Text(
-                          weekLabel,
-                          style: AppDesignSystem.labelSmall,
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 4),
-                        // Time Label
-                        Text(
-                          _formatDuration(totalMinutes),
-                          style: AppDesignSystem.labelSmall.copyWith(
-                            fontSize: 10,
-                            color: AppColors.textLight,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
-                    ),
+                      ),
+                      // ── Labels always below bar slot ──────────────────────
+                      const SizedBox(height: 6),
+                      Text(
+                        weekLabel,
+                        style: AppDesignSystem.labelSmall,
+                        textAlign: TextAlign.center,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        _formatDuration(totalMinutes),
+                        style: AppDesignSystem.labelSmall.copyWith(
+                            fontSize: 9, color: AppColors.textLight),
+                        textAlign: TextAlign.center,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
                   ),
-                );
-              }).toList(),
-            ),
+                ),
+              );
+            }).toList(),
           ),
         ],
       ),
     );
   }
+
+  // ── MOST USED APPS ────────────────────────────────────────────────────────────
 
   Widget _buildMostUsedAppsSection(List<AppUsageFirebase> apps) {
     final mostUsed = apps
@@ -693,18 +655,12 @@ class _ScreenTimeActivityScreenState extends State<ScreenTimeActivityScreen> {
       ..sort((a, b) => b.usageDuration.compareTo(a.usageDuration));
 
     final topApps = mostUsed.take(10).toList();
-
-    if (topApps.isEmpty) {
-      return const SizedBox.shrink();
-    }
+    if (topApps.isEmpty) return const SizedBox.shrink();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Most Used Apps',
-          style: AppDesignSystem.headline2,
-        ),
+        Text('Most Used Apps', style: AppDesignSystem.headline2),
         const SizedBox(height: AppDesignSystem.spacingM),
         ...topApps.map((app) => _buildAppCard(app)),
       ],
@@ -712,9 +668,9 @@ class _ScreenTimeActivityScreenState extends State<ScreenTimeActivityScreen> {
   }
 
   Widget _buildAppCard(AppUsageFirebase app) {
-    final category = AppCategoryHelper.getCategory(app.appName, app.packageName);
+    final category      = AppCategoryHelper.getCategory(app.appName, app.packageName);
     final categoryColor = Color(AppCategoryHelper.getCategoryColor(category));
-    
+
     return Container(
       margin: const EdgeInsets.only(bottom: AppDesignSystem.spacingM),
       padding: const EdgeInsets.all(AppDesignSystem.spacingM),
@@ -731,7 +687,6 @@ class _ScreenTimeActivityScreenState extends State<ScreenTimeActivityScreen> {
       ),
       child: Row(
         children: [
-          // App Icon/Initial
           Container(
             width: 48,
             height: 48,
@@ -742,35 +697,27 @@ class _ScreenTimeActivityScreenState extends State<ScreenTimeActivityScreen> {
             child: Center(
               child: Text(
                 app.appName.isNotEmpty ? app.appName[0].toUpperCase() : 'A',
-                style: AppDesignSystem.headline3.copyWith(
-                  color: categoryColor,
-                ),
+                style: AppDesignSystem.headline3.copyWith(color: categoryColor),
               ),
             ),
           ),
           const SizedBox(width: AppDesignSystem.spacingM),
-          // App Info
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   app.appName,
-                  style: AppDesignSystem.bodyLarge.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: AppDesignSystem.bodyLarge.copyWith(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   AppCategoryHelper.getCategoryName(category),
-                  style: AppDesignSystem.bodySmall.copyWith(
-                    color: AppColors.textLight,
-                  ),
+                  style: AppDesignSystem.bodySmall.copyWith(color: AppColors.textLight),
                 ),
               ],
             ),
           ),
-          // Usage Time
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
@@ -783,9 +730,7 @@ class _ScreenTimeActivityScreenState extends State<ScreenTimeActivityScreen> {
               ),
               Text(
                 '${app.launchCount} launches',
-                style: AppDesignSystem.bodySmall.copyWith(
-                  color: AppColors.textLight,
-                ),
+                style: AppDesignSystem.bodySmall.copyWith(color: AppColors.textLight),
               ),
             ],
           ),
@@ -794,115 +739,87 @@ class _ScreenTimeActivityScreenState extends State<ScreenTimeActivityScreen> {
     );
   }
 
-  // Helper Methods
+  // ── HELPERS ───────────────────────────────────────────────────────────────────
+
   List<AppUsageFirebase> _getTodayApps(List<AppUsageFirebase> apps) {
-    final today = DateTime.now();
+    final today      = DateTime.now();
     final startOfDay = DateTime(today.year, today.month, today.day);
-    
-    return apps.where((app) {
-      return app.lastUsed.isAfter(startOfDay);
-    }).toList();
+    return apps.where((app) => app.lastUsed.isAfter(startOfDay)).toList();
   }
 
   Map<AppCategory, int> _getCategoryData(List<AppUsageFirebase> apps) {
     final categoryData = <AppCategory, int>{};
-    
     for (final app in apps) {
       final category = AppCategoryHelper.getCategory(app.appName, app.packageName);
       categoryData[category] = (categoryData[category] ?? 0) + app.usageDuration;
     }
-    
     return categoryData;
   }
 
   Map<String, dynamic> _getWeeklyData(List<AppUsageFirebase> apps) {
-    final now = DateTime.now();
-    final dailyData = <Map<String, dynamic>>[];
+    final now        = DateTime.now();
+    final dailyData  = <Map<String, dynamic>>[];
     int totalMinutes = 0;
 
     for (int i = 6; i >= 0; i--) {
-      final date = now.subtract(Duration(days: i));
+      final date       = now.subtract(Duration(days: i));
       final startOfDay = DateTime(date.year, date.month, date.day);
-      final endOfDay = startOfDay.add(const Duration(days: 1));
+      final endOfDay   = startOfDay.add(const Duration(days: 1));
 
-      final dayApps = apps.where((app) {
-        return app.lastUsed.isAfter(startOfDay) && app.lastUsed.isBefore(endOfDay);
-      }).toList();
+      final dayApps = apps
+          .where((app) =>
+              app.lastUsed.isAfter(startOfDay) &&
+              app.lastUsed.isBefore(endOfDay))
+          .toList();
 
-      final dayMinutes = dayApps.fold<int>(0, (sum, app) => sum + app.usageDuration);
+      final dayMinutes      = dayApps.fold<int>(0, (s, a) => s + a.usageDuration);
       final categoryMinutes = _getCategoryData(dayApps);
 
       dailyData.add({
-        'dayName': DateFormat('E').format(date), // Mon, Tue, etc.
-        'totalMinutes': dayMinutes,
+        'dayName':         DateFormat('E').format(date),
+        'totalMinutes':    dayMinutes,
         'categoryMinutes': categoryMinutes,
       });
-
       totalMinutes += dayMinutes;
     }
 
-    return {
-      'totalMinutes': totalMinutes,
-      'dailyData': dailyData,
-    };
+    return {'totalMinutes': totalMinutes, 'dailyData': dailyData};
   }
 
   Map<String, dynamic> _getMonthlyData(List<AppUsageFirebase> apps) {
-    final now = DateTime.now();
+    final now        = DateTime.now();
     final weeklyData = <Map<String, dynamic>>[];
     int totalMinutes = 0;
 
-    // Get last 4 weeks
     for (int i = 3; i >= 0; i--) {
       final weekStart = now.subtract(Duration(days: (i * 7) + now.weekday - 1));
-      final weekEnd = weekStart.add(const Duration(days: 7));
+      final weekEnd   = weekStart.add(const Duration(days: 7));
 
-      final weekApps = apps.where((app) {
-        return app.lastUsed.isAfter(weekStart) && app.lastUsed.isBefore(weekEnd);
-      }).toList();
+      final weekApps = apps
+          .where((app) =>
+              app.lastUsed.isAfter(weekStart) &&
+              app.lastUsed.isBefore(weekEnd))
+          .toList();
 
-      final weekMinutes = weekApps.fold<int>(0, (sum, app) => sum + app.usageDuration);
-
-      weeklyData.add({
-        'weekLabel': 'W${4 - i}',
-        'totalMinutes': weekMinutes,
-      });
-
+      final weekMinutes = weekApps.fold<int>(0, (s, a) => s + a.usageDuration);
+      weeklyData.add({'weekLabel': 'W${4 - i}', 'totalMinutes': weekMinutes});
       totalMinutes += weekMinutes;
     }
 
-    return {
-      'totalMinutes': totalMinutes,
-      'weeklyData': weeklyData,
-    };
+    return {'totalMinutes': totalMinutes, 'weeklyData': weeklyData};
   }
 
   String _formatDuration(int minutes) {
-    if (minutes < 60) {
-      return '${minutes}m';
-    } else {
-      final hours = minutes ~/ 60;
-      final remainingMinutes = minutes % 60;
-      if (remainingMinutes == 0) {
-        return '${hours}h';
-      } else {
-        return '${hours}h ${remainingMinutes}m';
-      }
-    }
+    if (minutes < 60) return '${minutes}m';
+    final h = minutes ~/ 60;
+    final m = minutes % 60;
+    return m == 0 ? '${h}h' : '${h}h ${m}m';
   }
 
   String _formatTotalTime(int minutes) {
-    if (minutes < 60) {
-      return '${minutes}m';
-    } else {
-      final hours = minutes ~/ 60;
-      final remainingMinutes = minutes % 60;
-      if (remainingMinutes == 0) {
-        return '${hours}hrs';
-      } else {
-        return '${hours}hrs ${remainingMinutes}mins';
-      }
-    }
+    if (minutes < 60) return '${minutes}m';
+    final h = minutes ~/ 60;
+    final m = minutes % 60;
+    return m == 0 ? '${h}hrs' : '${h}hrs ${m}mins';
   }
 }
-

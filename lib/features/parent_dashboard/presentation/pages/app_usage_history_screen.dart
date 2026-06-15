@@ -300,19 +300,22 @@ class _AppUsageHistoryScreenState extends State<AppUsageHistoryScreen>
               ),
               SizedBox(height: 12),
               // Sort Options
-              Row(
-                children: [
-                  Text(
-                    'Sort by:',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  SizedBox(width: 12),
-                  _buildSortChip('Usage Time', 'usage'),
-                  SizedBox(width: 8),
-                  _buildSortChip('Name', 'name'),
-                  SizedBox(width: 8),
-                  _buildSortChip('Launches', 'launches'),
-                ],
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    Text(
+                      'Sort by:',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    SizedBox(width: 12),
+                    _buildSortChip('Usage Time', 'usage'),
+                    SizedBox(width: 8),
+                    _buildSortChip('Name', 'name'),
+                    SizedBox(width: 8),
+                    _buildSortChip('Launches', 'launches'),
+                  ],
+                ),
               ),
             ],
           ),
