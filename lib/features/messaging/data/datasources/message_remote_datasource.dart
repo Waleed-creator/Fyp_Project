@@ -9,7 +9,6 @@ import '../models/message_model.dart';
 import '../../../notifications/data/services/notification_integration_service.dart';
 import '../../../watch_list/data/services/watch_list_firebase_service.dart';
 
-
 class MessageRemoteDataSourceImpl {
   final FirebaseFirestore firestore;
   Timer? _monitorTimer;
@@ -23,11 +22,11 @@ class MessageRemoteDataSourceImpl {
     required String childId,
   }) {
     if (_isRunning) {
-      ('⚙️ [Monitor] Already running, skipping duplicate start');
+      print('⚙️ [Monitor] Already running, skipping duplicate start');
       return;
     }
 
-    ('🚀 [Monitor] Starting background message monitoring (every 5s)...');
+    print('🚀 [Monitor] Starting background message monitoring (every 5s)...');
     _isRunning = true;
 
     // Run immediately once, then every 5 seconds
@@ -41,7 +40,7 @@ class MessageRemoteDataSourceImpl {
   void stopMonitoring() {
     _monitorTimer?.cancel();
     _isRunning = false;
-    ('🛑 [Monitor] Message monitoring stopped.');
+    print('🛑 [Monitor] Message monitoring stopped.');
   }
 
   /// 🔄 Reset message timestamp for testing
@@ -49,43 +48,57 @@ class MessageRemoteDataSourceImpl {
     final prefs = await SharedPreferences.getInstance();
     final lastTsKey = 'last_message_timestamp_$childId';
     await prefs.setInt(lastTsKey, 0); // Set to 0 instead of removing
-    ('🔄 [MessageRemote] Message timestamp reset to 0 for child: $childId');
+    print(
+      '🔄 [MessageRemote] Message timestamp reset to 0 for child: $childId',
+    );
   }
-  
+
   /// 🧹 Force reset and process all recent messages
   Future<void> forceResetAndProcess(String parentId, String childId) async {
-    ('🔄 [MessageRemote] Force resetting and processing all recent messages...');
-    
+    print(
+      '🔄 [MessageRemote] Force resetting and processing all recent messages...',
+    );
+
     // Reset timestamp to 0 to force reprocessing
     final prefs = await SharedPreferences.getInstance();
     final lastTsKey = 'last_message_timestamp_$childId';
     await prefs.setInt(lastTsKey, 0);
-    
+
     // Process all messages from last 1 day
     await monitorChildMessages(parentId: parentId, childId: childId);
-    
-    ('✅ [MessageRemote] Force reset and process completed');
+
+    print('✅ [MessageRemote] Force reset and process completed');
   }
 
   /// 🧪 Process recent messages immediately (for testing)
-  Future<void> _processRecentMessages(String parentId, String childId, List<SmsMessage> messages) async {
-    ('🧪 [MessageRemote] Processing recent messages for immediate analysis...');
-    
+  Future<void> _processRecentMessages(
+    String parentId,
+    String childId,
+    List<SmsMessage> messages,
+  ) async {
+    print(
+      '🧪 [MessageRemote] Processing recent messages for immediate analysis...',
+    );
+
     int processedCount = 0;
     int flaggedCount = 0;
-    
+
     // Process messages from last 7 days
-    final sevenDaysAgo = DateTime.now().subtract(const Duration(days: 7)).millisecondsSinceEpoch;
-    
+    final sevenDaysAgo = DateTime.now()
+        .subtract(const Duration(days: 7))
+        .millisecondsSinceEpoch;
+
     for (final msg in messages) {
       final ts = msg.date?.millisecondsSinceEpoch ?? 0;
       final body = msg.body ?? '';
-      
+
       if (ts < sevenDaysAgo || body.trim().isEmpty) continue;
-      
+
       processedCount++;
-      ('🆕 [MessageRemote] Processing message: "${body.length > 40 ? "${body.substring(0, 40)}..." : body}"');
-      
+      print(
+        '🆕 [MessageRemote] Processing message: "${body.length > 40 ? "${body.substring(0, 40)}..." : body}"',
+      );
+
       // Analyze via Flask
       final flagged = await _analyzeAndUpload(
         parentId: parentId,
@@ -94,16 +107,18 @@ class MessageRemoteDataSourceImpl {
         timestamp: ts,
         sender: msg.address ?? 'unknown',
       );
-      
+
       if (flagged) flaggedCount++;
     }
-    
+
     // Update timestamp to current time
     final prefs = await SharedPreferences.getInstance();
     final lastTsKey = 'last_message_timestamp_$childId';
     await prefs.setInt(lastTsKey, DateTime.now().millisecondsSinceEpoch);
-    
-    ('✅ [MessageRemote] Processed $processedCount messages, flagged $flaggedCount');
+
+    print(
+      '✅ [MessageRemote] Processed $processedCount messages, flagged $flaggedCount',
+    );
   }
 
   /// 📡 Main monitor called every 5 seconds
@@ -111,19 +126,21 @@ class MessageRemoteDataSourceImpl {
     required String parentId,
     required String childId,
   }) async {
-    ('\n📡 [MessageRemote] Checking new messages for child: $childId');
+    print('\n📡 [MessageRemote] Checking new messages for child: $childId');
 
     try {
       // Check SMS permission first
       final smsPermission = await Permission.sms.status;
-      ('🔐 [MessageRemote] SMS Permission Status: $smsPermission');
-      
+      print('🔐 [MessageRemote] SMS Permission Status: $smsPermission');
+
       if (smsPermission != PermissionStatus.granted) {
-        ('❌ [MessageRemote] SMS permission not granted - requesting...');
+        print('❌ [MessageRemote] SMS permission not granted - requesting...');
         final result = await Permission.sms.request();
-        ('🔐 [MessageRemote] SMS Permission Request Result: $result');
+        print('🔐 [MessageRemote] SMS Permission Request Result: $result');
         if (result != PermissionStatus.granted) {
-          ('❌ [MessageRemote] SMS permission denied - cannot access messages');
+          print(
+            '❌ [MessageRemote] SMS permission denied - cannot access messages',
+          );
           return;
         }
       }
@@ -138,7 +155,7 @@ class MessageRemoteDataSourceImpl {
         count: 50,
         sort: true,
       );
-      
+
       // OPTIMIZATION: Sort by timestamp (newest first) for early exit
       final messages = allMessages.toList()
         ..sort((a, b) {
@@ -146,42 +163,62 @@ class MessageRemoteDataSourceImpl {
           final tsB = b.date?.millisecondsSinceEpoch ?? 0;
           return tsB.compareTo(tsA); // Newest first
         });
-      
-      ('📱 [MessageRemote] SMS Query Result: Found ${messages.length} messages (sorted newest first)');
+
+      print(
+        '📱 [MessageRemote] SMS Query Result: Found ${messages.length} messages (sorted newest first)',
+      );
       if (messages.isNotEmpty) {
-        ('📱 [MessageRemote] First message: ${messages.first.body} from ${messages.first.address}');
-        ('📱 [MessageRemote] Last message: ${messages.last.body} from ${messages.last.address}');
+        print(
+          '📱 [MessageRemote] First message: ${messages.first.body} from ${messages.first.address}',
+        );
+        print(
+          '📱 [MessageRemote] Last message: ${messages.last.body} from ${messages.last.address}',
+        );
       } else {
-        ('⚠️ [MessageRemote] No SMS messages found - check permissions!');
+        print('⚠️ [MessageRemote] No SMS messages found - check permissions!');
       }
 
       // Check if timestamp is corrupted (too large or in the future)
       final currentTime = DateTime.now().millisecondsSinceEpoch;
       // Check for timestamps that are way too large or in the future
-      if (lastTimestamp > currentTime || lastTimestamp > 2000000000000 || lastTimestamp > 1000000000000 || lastTimestamp > 200000000000) { // Check for unrealistic timestamps
-        ('⚠️ [MessageRemote] Corrupted timestamp detected: $lastTimestamp > $currentTime');
-        ('🔄 [MessageRemote] Resetting timestamp...');
+      if (lastTimestamp > currentTime ||
+          lastTimestamp > 2000000000000 ||
+          lastTimestamp > 1000000000000 ||
+          lastTimestamp > 200000000000) {
+        // Check for unrealistic timestamps
+        print(
+          '⚠️ [MessageRemote] Corrupted timestamp detected: $lastTimestamp > $currentTime',
+        );
+        print('🔄 [MessageRemote] Resetting timestamp...');
         lastTimestamp = 0; // Reset to force first-time setup
         await prefs.setInt(lastTsKey, 0); // Save the reset
-        ('ℹ️ [MessageRemote] Timestamp reset to 0 - will initialize on next run');
-        
+        print(
+          'ℹ️ [MessageRemote] Timestamp reset to 0 - will initialize on next run',
+        );
+
         // Force immediate processing of recent messages
-        ('🧪 [MessageRemote] Processing recent messages immediately...');
+        print('🧪 [MessageRemote] Processing recent messages immediately...');
         await _processRecentMessages(parentId, childId, messages);
         return;
       }
-      
+
       // Additional check for future timestamps (like 1758955140803 which is October 2025)
-      final oneYearFromNow = DateTime.now().add(const Duration(days: 365)).millisecondsSinceEpoch;
+      final oneYearFromNow = DateTime.now()
+          .add(const Duration(days: 365))
+          .millisecondsSinceEpoch;
       if (lastTimestamp > oneYearFromNow) {
-        ('⚠️ [MessageRemote] Future timestamp detected: $lastTimestamp > $oneYearFromNow');
-        ('🔄 [MessageRemote] Resetting timestamp...');
+        print(
+          '⚠️ [MessageRemote] Future timestamp detected: $lastTimestamp > $oneYearFromNow',
+        );
+        print('🔄 [MessageRemote] Resetting timestamp...');
         lastTimestamp = 0;
         await prefs.setInt(lastTsKey, 0);
-        ('ℹ️ [MessageRemote] Timestamp reset to 0 - will initialize on next run');
-        
+        print(
+          'ℹ️ [MessageRemote] Timestamp reset to 0 - will initialize on next run',
+        );
+
         // Force immediate processing of recent messages
-        ('🧪 [MessageRemote] Processing recent messages immediately...');
+        print('🧪 [MessageRemote] Processing recent messages immediately...');
         await _processRecentMessages(parentId, childId, messages);
         return;
       }
@@ -189,39 +226,55 @@ class MessageRemoteDataSourceImpl {
       // 🕐 First-time setup - Process ONLY last 24 hours of messages (NOT old messages)
       if (lastTimestamp == 0) {
         final now = DateTime.now().millisecondsSinceEpoch;
-        final twentyFourHoursAgo = DateTime.now().subtract(const Duration(hours: 24)).millisecondsSinceEpoch;
-        
-        ('🕐 [MessageRemote] First run detected → Processing ONLY last 24 hours of messages');
-        ('📅 [MessageRemote] Processing messages from: ${DateTime.fromMillisecondsSinceEpoch(twentyFourHoursAgo)}');
-        ('📅 [MessageRemote] Processing messages until: ${DateTime.fromMillisecondsSinceEpoch(now)}');
-        ('⚠️ [MessageRemote] Old messages will be SKIPPED (only last 24h)');
-        
+        final twentyFourHoursAgo = DateTime.now()
+            .subtract(const Duration(hours: 24))
+            .millisecondsSinceEpoch;
+
+        print(
+          '🕐 [MessageRemote] First run detected → Processing ONLY last 24 hours of messages',
+        );
+        print(
+          '📅 [MessageRemote] Processing messages from: ${DateTime.fromMillisecondsSinceEpoch(twentyFourHoursAgo)}',
+        );
+        print(
+          '📅 [MessageRemote] Processing messages until: ${DateTime.fromMillisecondsSinceEpoch(now)}',
+        );
+        print(
+          '⚠️ [MessageRemote] Old messages will be SKIPPED (only last 24h)',
+        );
+
         // Process all messages from last 24 hours ONLY
         // OPTIMIZATION: Since messages are sorted newest first, we can break early
         int processedCount = 0;
         int flaggedCount = 0;
         int skippedOldCount = 0;
-        
+
         for (final msg in messages) {
           final ts = msg.date?.millisecondsSinceEpoch ?? 0;
           final body = msg.body ?? '';
-          
+
           // OPTIMIZATION: Early exit - as soon as we hit 24-hour threshold, stop
           // (messages are sorted newest first, so all remaining are older)
           if (ts < twentyFourHoursAgo) {
             skippedOldCount = messages.length - processedCount;
-            ('⏭️ [MessageRemote] Reached 24-hour threshold - stopping early');
-            ('   Processed: $processedCount messages, Skipping: $skippedOldCount old messages');
+            print(
+              '⏭️ [MessageRemote] Reached 24-hour threshold - stopping early',
+            );
+            print(
+              '   Processed: $processedCount messages, Skipping: $skippedOldCount old messages',
+            );
             break;
           }
-          
+
           // Skip if no body
           if (body.trim().isEmpty) continue;
-          
+
           // Process message (already verified it's within 24 hours)
           final sender = msg.address ?? 'unknown';
-          ('🆕 [MessageRemote] Processing message: "${body.length > 40 ? "${body.substring(0, 40)}..." : body}"');
-          
+          print(
+            '🆕 [MessageRemote] Processing message: "${body.length > 40 ? "${body.substring(0, 40)}..." : body}"',
+          );
+
           final flagged = await _analyzeAndUpload(
             parentId: parentId,
             childId: childId,
@@ -229,41 +282,54 @@ class MessageRemoteDataSourceImpl {
             timestamp: ts,
             sender: sender,
           );
-          
+
           processedCount++;
           if (flagged) flaggedCount++;
         }
-        
+
         // Set timestamp to current time (with 2s safety window) for future runs
         final safeTimestamp = now - 2000;
         await prefs.setInt(lastTsKey, safeTimestamp);
-        ('✅ [MessageRemote] First run complete:');
-        ('   Processed: $processedCount messages (last 24h)');
-        ('   Flagged: $flaggedCount messages');
-        ('   Skipped: $skippedOldCount old messages');
-        ('ℹ️ [MessageRemote] Next run will process messages newer than: ${DateTime.fromMillisecondsSinceEpoch(safeTimestamp)}');
+        print('✅ [MessageRemote] First run complete:');
+        print('   Processed: $processedCount messages (last 24h)');
+        print('   Flagged: $flaggedCount messages');
+        print('   Skipped: $skippedOldCount old messages');
+        print(
+          'ℹ️ [MessageRemote] Next run will process messages newer than: ${DateTime.fromMillisecondsSinceEpoch(safeTimestamp)}',
+        );
         return;
       }
 
+      print('💬 [MessageRemote] Total SMS fetched: ${messages.length}');
+      print('⏰ [MessageRemote] Last processed timestamp: $lastTimestamp');
+      print(
+        '🕐 [MessageRemote] Current time: ${DateTime.now().millisecondsSinceEpoch}',
+      );
 
-      ('💬 [MessageRemote] Total SMS fetched: ${messages.length}');
-      ('⏰ [MessageRemote] Last processed timestamp: $lastTimestamp');
-      ('🕐 [MessageRemote] Current time: ${DateTime.now().millisecondsSinceEpoch}');
-      
       // Show each message with timestamp for debugging
       for (int i = 0; i < messages.length; i++) {
         final msg = messages[i];
         final sender = msg.address ?? 'Unknown';
         final body = msg.body ?? '';
-        final shortBody = body.length > 30 ? '${body.substring(0, 30)}...' : body;
-        final msgTime = msg.date != null ? DateTime.fromMillisecondsSinceEpoch(msg.date!.millisecondsSinceEpoch) : DateTime.now();
+        final shortBody = body.length > 30
+            ? '${body.substring(0, 30)}...'
+            : body;
+        final msgTime = msg.date != null
+            ? DateTime.fromMillisecondsSinceEpoch(
+                msg.date!.millisecondsSinceEpoch,
+              )
+            : DateTime.now();
         final timeAgo = DateTime.now().difference(msgTime).inMinutes;
-        ('📱 [MessageRemote] Message ${i+1}: From $sender - "$shortBody" (${timeAgo}m ago)');
+        print(
+          '📱 [MessageRemote] Message ${i + 1}: From $sender - "$shortBody" (${timeAgo}m ago)',
+        );
       }
-      
+
       // Calculate 24 hours threshold ONCE (outside loop for performance)
-      final twentyFourHoursAgo = DateTime.now().subtract(const Duration(hours: 24)).millisecondsSinceEpoch;
-      
+      final twentyFourHoursAgo = DateTime.now()
+          .subtract(const Duration(hours: 24))
+          .millisecondsSinceEpoch;
+
       int newMessageCount = 0;
       int analyzedCount = 0;
       int latestTimestamp = lastTimestamp;
@@ -278,22 +344,28 @@ class MessageRemoteDataSourceImpl {
           // Silently skip - no need to log thousands of old messages
           continue;
         }
-        
+
         // Skip already processed messages (duplicate check)
         if (ts <= lastTimestamp) {
           // Silently skip - already processed in previous run
           continue;
         }
-        
+
         if (body.trim().isEmpty) continue;
-        
+
         newMessageCount++;
         final sender = msg.address ?? 'unknown';
-        ('🆕 [MessageRemote] NEW message found: "${body.length > 40 ? "${body.substring(0, 40)}..." : body}"');
-        ('📅 [MessageRemote] Message timestamp: $ts (last: $lastTimestamp)');
+        print(
+          '🆕 [MessageRemote] NEW message found: "${body.length > 40 ? "${body.substring(0, 40)}..." : body}"',
+        );
+        print(
+          '📅 [MessageRemote] Message timestamp: $ts (last: $lastTimestamp)',
+        );
 
         // 🔍 Analyze via Flask
-        ('🧠 [MessageRemote] Starting analysis for text: "${body.length > 50 ? "${body.substring(0, 50)}..." : body}"');
+        print(
+          '🧠 [MessageRemote] Starting analysis for text: "${body.length > 50 ? "${body.substring(0, 50)}..." : body}"',
+        );
         final flagged = await _analyzeAndUpload(
           parentId: parentId,
           childId: childId,
@@ -303,7 +375,7 @@ class MessageRemoteDataSourceImpl {
         );
 
         analyzedCount++;
-        if (flagged) ('🚨 [MessageRemote] Suspicious message uploaded.');
+        if (flagged) print('🚨 [MessageRemote] Suspicious message uploaded.');
         if (ts > latestTimestamp) latestTimestamp = ts;
       }
 
@@ -314,30 +386,44 @@ class MessageRemoteDataSourceImpl {
         // Prevent skip if message timestamp mismatched (future timestamp issue)
         final safeTimestamp = latestTimestamp - 2000;
         await prefs.setInt(lastTsKey, safeTimestamp);
-        
+
         final latestTime = DateTime.fromMillisecondsSinceEpoch(latestTimestamp);
         final safeTime = DateTime.fromMillisecondsSinceEpoch(safeTimestamp);
-        
-        ('✅ [MessageRemote] Processed $newMessageCount messages, analyzed $analyzedCount');
-        ('⏰ [MessageRemote] Updated last processed timestamp');
-        ('   Latest message: ${latestTime.toIso8601String()}');
-        ('   Safe timestamp: ${safeTime.toIso8601String()} (2s safety window)');
-        ('ℹ️ [MessageRemote] Next run will process messages after: ${safeTime.toIso8601String()}');
+
+        print(
+          '✅ [MessageRemote] Processed $newMessageCount messages, analyzed $analyzedCount',
+        );
+        print('⏰ [MessageRemote] Updated last processed timestamp');
+        print('   Latest message: ${latestTime.toIso8601String()}');
+        print(
+          '   Safe timestamp: ${safeTime.toIso8601String()} (2s safety window)',
+        );
+        print(
+          'ℹ️ [MessageRemote] Next run will process messages after: ${safeTime.toIso8601String()}',
+        );
       } else {
-        ('😴 [MessageRemote] No new messages found');
-        ('ℹ️ [MessageRemote] All messages are older than: ${DateTime.fromMillisecondsSinceEpoch(lastTimestamp)}');
-        ('ℹ️ [MessageRemote] Current time: ${DateTime.now()}');
-        ('ℹ️ [MessageRemote] Time difference: ${(DateTime.now().millisecondsSinceEpoch - lastTimestamp) / 1000}s');
-        ('ℹ️ [MessageRemote] This means no new messages arrived since the last check');
+        print('😴 [MessageRemote] No new messages found');
+        print(
+          'ℹ️ [MessageRemote] All messages are older than: ${DateTime.fromMillisecondsSinceEpoch(lastTimestamp)}',
+        );
+        print('ℹ️ [MessageRemote] Current time: ${DateTime.now()}');
+        print(
+          'ℹ️ [MessageRemote] Time difference: ${(DateTime.now().millisecondsSinceEpoch - lastTimestamp) / 1000}s',
+        );
+        print(
+          'ℹ️ [MessageRemote] This means no new messages arrived since the last check',
+        );
       }
 
-      ('✅ [MessageRemote] Cycle complete | Checked: ${messages.length}, New: $newMessageCount, Analyzed: $analyzedCount');
+      print(
+        '✅ [MessageRemote] Cycle complete | Checked: ${messages.length}, New: $newMessageCount, Analyzed: $analyzedCount',
+      );
     } catch (e) {
-      ('❌ [MessageRemote] Error during monitoring: $e');
+      print('❌ [MessageRemote] Error during monitoring: $e');
     }
   }
 
-  /// 🧠 Analyze via Flask and upload flagged ones to Firebase
+  // Analyze flask and upload
   Future<bool> _analyzeAndUpload({
     required String parentId,
     required String childId,
@@ -355,34 +441,31 @@ class MessageRemoteDataSourceImpl {
       );
 
       if (isInWatchList) {
-        // Contact is in watch list - immediately flag and notify
         final contact = await watchListService.getContactByPhoneNumber(
           parentId: parentId,
           childId: childId,
           phoneNumber: sender,
         );
-        
-        ('🚨 [MessageRemote] Watch List contact detected: ${contact?.contactName ?? sender}');
-        
-        // Upload to flagged messages
+
+        print(
+          '🚨 [MessageRemote] Watch List contact detected: ${contact?.contactName ?? sender}',
+        );
+
+        // ✅ toxLabel yahan hardcode hai - watch_list
         await firestore
             .collection('parents')
             .doc(parentId)
             .collection('children')
             .doc(childId)
-            .collection('flagged_messages')
+            .collection('messages')
             .add({
-          'content': text,
-          'timestamp': timestamp,
-          'sender': sender,
-          'tox_label': 'watch_list',
-          'tox_score': 1.0,
-          'watch_list_contact': contact?.contactName ?? sender,
-          'analyzed_at': FieldValue.serverTimestamp(),
-          'analysis_source': 'watch_list',
-        });
-        
-        // Send notification immediately
+              'message': text,
+              'timestamp': timestamp,
+              'type': 'watch_list', // ← hardcoded, no variable needed
+              'sender': sender,
+              'analyzed_at': FieldValue.serverTimestamp(),
+            });
+
         try {
           final notificationService = NotificationIntegrationService();
           await notificationService.onSuspiciousMessageDetected(
@@ -393,64 +476,72 @@ class MessageRemoteDataSourceImpl {
             toxLabel: 'Watch List: ${contact?.contactName ?? sender}',
             toxScore: 1.0,
           );
-          ('✅ [MessageRemote] Watch List notification sent to parent');
+          print('✅ [MessageRemote] Watch List notification sent to parent');
         } catch (e) {
-          ('⚠️ [MessageRemote] Error sending watch list notification: $e');
+          print('⚠️ [MessageRemote] Error sending watch list notification: $e');
         }
-        
-        return true; // Flagged due to watch list
+
+        return true;
       }
     } catch (e) {
-      ('ℹ️ [MessageRemote] Watch list check skipped: $e');
+      print('ℹ️ [MessageRemote] Watch list check skipped: $e');
     }
 
     // Continue with normal toxic content analysis
     final urls = [
-      'http://192.168.18.41:5000/analyze', // Flask server on LAN (primary)
-      'http://127.0.0.1:5000/analyze',     // localhost Flask server
-      'http://localhost:5000/analyze',      // localhost alternative
-      'http://10.0.2.2:5000/analyze',      // emulator
+      'http://10.158.246.219:5000',
+      'https://quintuple-unbraided-urgency.ngrok-free.dev/analyze',
     ];
 
     for (final url in urls) {
       try {
-        ('🌐 [MessageRemote] POST → $url');
+        print('🌐 [MessageRemote] POST → $url');
         final response = await http
             .post(
               Uri.parse(url),
               headers: {'Content-Type': 'application/json'},
-              body: jsonEncode({'text': text, 'sender': sender, 'timestamp': timestamp}),
+              body: jsonEncode({
+                'text': text,
+                'sender': sender,
+                'timestamp': timestamp,
+              }),
             )
             .timeout(const Duration(seconds: 30));
 
         if (response.statusCode == 200) {
           final data = jsonDecode(response.body);
           final flag = data['flag'] ?? 0;
-          final toxLabel = data['tox_label'] ?? data['label'] ?? 'none';
-          final toxScore = (data['tox_score'] ?? data['score'] ?? 0.0).toDouble();
-          
-          ('📊 [MessageRemote] Flask response: flag=$flag, label=$toxLabel, score=$toxScore');
+          final toxLabel =
+              data['tox_label'] ?? 'none'; // ✅ yahan define hota hai
+          final toxScore = (data['tox_score'] ?? 0.0).toDouble();
+
+          print(
+            '📊 [MessageRemote] Flask response: flag=$flag, label=$toxLabel, score=$toxScore',
+          );
 
           if (flag == 1) {
-            ('🚨 [MessageRemote] Flagged message detected! Uploading to Firebase...');
+            print(
+              '🚨 [MessageRemote] Flagged message detected! Uploading to Firebase...',
+            );
+
             await firestore
                 .collection('parents')
                 .doc(parentId)
                 .collection('children')
                 .doc(childId)
-                .collection('flagged_messages')
+                .collection('messages') // ✅ flagged_messages → messages
                 .add({
-              'content': text,
-              'timestamp': timestamp,
-              'sender': sender,
-              'tox_label': toxLabel,
-              'tox_score': toxScore,
-              'analyzed_at': FieldValue.serverTimestamp(),
-              'analysis_source': 'flask_server',
-            });
-            ('✅ [MessageRemote] Flagged message uploaded to Firebase successfully!');
-            
-            // Send FCM notification to parent
+                  'message': text, // ✅ content → message
+                  'timestamp': timestamp,
+                  'type': toxLabel, // ✅ tox_label → type
+                  'sender': sender,
+                  'analyzed_at': FieldValue.serverTimestamp(),
+                });
+
+            print(
+              '✅ [MessageRemote] Message uploaded to Firebase successfully!',
+            );
+
             try {
               final notificationService = NotificationIntegrationService();
               await notificationService.onSuspiciousMessageDetected(
@@ -461,23 +552,23 @@ class MessageRemoteDataSourceImpl {
                 toxLabel: toxLabel,
                 toxScore: toxScore,
               );
-              ('✅ [MessageRemote] FCM notification sent to parent');
+              print('✅ [MessageRemote] FCM notification sent to parent');
             } catch (e) {
-              ('⚠️ [MessageRemote] Error sending FCM notification: $e');
+              print('⚠️ [MessageRemote] Error sending FCM notification: $e');
             }
-            
+
             return true;
           } else {
-            ('✅ [MessageRemote] Message is clean (not flagged)');
+            print('✅ [MessageRemote] Message is clean (not flagged)');
             return false;
           }
         }
       } catch (e) {
-        ('⚠️ [Analyzer] Failed to call $url → $e');
+        print('⚠️ [Analyzer] Failed to call $url → $e');
         continue;
       }
     }
-    ('❌ [MessageRemote] All Flask URLs failed - message not analyzed');
+    print('❌ [MessageRemote] All Flask URLs failed - message not analyzed');
     return false;
   }
 
@@ -492,28 +583,40 @@ class MessageRemoteDataSourceImpl {
           .doc(parentId)
           .collection('children')
           .doc(childId)
-          .collection('flagged_messages')
+          .collection('messages') // ✅ flagged_messages → messages
           .orderBy('timestamp', descending: true)
           .get();
 
       return snapshot.docs.map((doc) {
         final data = doc.data();
+
+        // ✅ Timestamp fix
+        DateTime messageTime;
+        final ts = data['timestamp'];
+        if (ts is Timestamp) {
+          messageTime = ts.toDate();
+        } else if (ts is int) {
+          messageTime = DateTime.fromMillisecondsSinceEpoch(ts);
+        } else {
+          messageTime = DateTime.now();
+        }
+
         return MessageModel(
           id: doc.id,
           senderId: data['sender'] ?? 'unknown',
           receiverId: childId,
-          content: data['content'] ?? '',
-          timestamp: DateTime.fromMillisecondsSinceEpoch(data['timestamp'] ?? 0),
+          content: data['message'] ?? '',
+          timestamp: messageTime, // ✅ fixed
           messageType: 'text',
           childId: childId,
           isSuspicious: true,
-          riskScore: (data['tox_score'] ?? 0.0).toDouble(),
-          toxicType: data['tox_label'] ?? 'unknown',
+          riskScore: 0.0,
+          toxicType: data['type'] ?? 'unknown',
           analysisData: data,
         );
       }).toList();
     } catch (e) {
-      ('❌ [MessageRemote] Error fetching flagged messages: $e');
+      print('❌ [MessageRemote] Error fetching flagged messages: $e');
       return [];
     }
   }
@@ -530,10 +633,10 @@ class MessageRemoteDataSourceImpl {
           .collection('children')
           .doc(childId)
           .get();
-      
+
       return doc.exists;
     } catch (e) {
-      ('❌ [MessageRemote] Error checking child link: $e');
+      print('❌ [MessageRemote] Error checking child link: $e');
       return false;
     }
   }
@@ -555,7 +658,7 @@ class MessageRemoteDataSourceImpl {
           .map((doc) => MessageModel.fromMap(doc.data()))
           .toList();
     } catch (e) {
-      ('❌ [MessageRemote] Error fetching messages: $e');
+      print('❌ [MessageRemote] Error fetching messages: $e');
       return [];
     }
   }
@@ -571,7 +674,7 @@ class MessageRemoteDataSourceImpl {
   }) async {
     try {
       final messageId = firestore.collection('messages').doc().id;
-      
+
       final message = MessageModel(
         id: messageId,
         senderId: senderId,
@@ -583,21 +686,27 @@ class MessageRemoteDataSourceImpl {
         childId: childId,
       );
 
-      await firestore.collection('messages').doc(messageId).set(message.toMap());
+      await firestore
+          .collection('messages')
+          .doc(messageId)
+          .set(message.toMap());
     } catch (e) {
-      ('❌ [MessageRemote] Error sending message: $e');
+      print('❌ [MessageRemote] Error sending message: $e');
       rethrow;
     }
   }
 
   /// Mark message as suspicious
-  Future<void> markMessageAsSuspicious(String messageId, bool isSuspicious) async {
+  Future<void> markMessageAsSuspicious(
+    String messageId,
+    bool isSuspicious,
+  ) async {
     try {
       await firestore.collection('messages').doc(messageId).update({
         'isSuspicious': isSuspicious,
       });
     } catch (e) {
-      ('❌ [MessageRemote] Error updating message: $e');
+      print('❌ [MessageRemote] Error updating message: $e');
       rethrow;
     }
   }

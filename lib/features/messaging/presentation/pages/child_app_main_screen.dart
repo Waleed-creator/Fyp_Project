@@ -145,39 +145,40 @@ class _ChildAppMainScreenState extends State<ChildAppMainScreen> {
                 // Action buttons
                 Column(
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        ElevatedButton.icon(
-                          onPressed: () async {
-                            final status = await _initializationService.getPermissionStatus();
-                            _showPermissionStatus(context, status);
-                          },
-                          icon: const Icon(Icons.security),
-                          label: const Text('Check Permissions'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.darkCyan,
-                            foregroundColor: Colors.white,
-                          ),
-                        ),
-                        ElevatedButton.icon(
-                          onPressed: () async {
-                            await _initializationService.stopAllServices();
-                            setState(() {
-                              _isInitialized = false;
-                              _statusMessage = 'Services stopped';
-                            });
-                          },
-                          icon: const Icon(Icons.stop),
-                          label: const Text('Stop Services'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.red,
-                            foregroundColor: Colors.white,
-                          ),
-                        ),
-                      ],
-                    ),
-                    
+Wrap(
+  spacing: mq.w(0.02),
+  runSpacing: mq.h(0.01),
+  alignment: WrapAlignment.center,
+  children: [
+    ElevatedButton.icon(
+      onPressed: () async {
+        final status = await _initializationService.getPermissionStatus();
+        _showPermissionStatus(context, status);
+      },
+      icon: const Icon(Icons.security),
+      label: const Text('Check Permissions'),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: AppColors.darkCyan,
+        foregroundColor: Colors.white,
+      ),
+    ),
+    ElevatedButton.icon(
+      onPressed: () async {
+        await _initializationService.stopAllServices();
+        setState(() {
+          _isInitialized = false;
+          _statusMessage = 'Services stopped';
+        });
+      },
+      icon: const Icon(Icons.stop),
+      label: const Text('Stop Services'),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.red,
+        foregroundColor: Colors.white,
+      ),
+    ),
+  ],
+),
                     SizedBox(height: mq.h(0.02)),
                     
                     // Manual Sync Installed Apps Button

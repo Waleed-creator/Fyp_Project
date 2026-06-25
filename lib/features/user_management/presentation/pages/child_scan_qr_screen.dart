@@ -85,21 +85,21 @@ class _ChildScanQRScreenState extends State<ChildScanQRScreen> {
         
         if (parentUid != null) {
           // Child is already linked, check permissions first
-          debugPrint('✅ CHILD ALREADY LINKED: Parent ID found: $parentUid');
-          debugPrint('🔐 CHECKING PERMISSIONS: Verifying message permissions...');
+          print('✅ CHILD ALREADY LINKED: Parent ID found: $parentUid');
+          print('🔐 CHECKING PERMISSIONS: Verifying message permissions...');
           
           // Check if message permissions are granted
           final smsGranted = await Permission.sms.isGranted;
           final phoneGranted = await Permission.phone.isGranted;
           
           if (smsGranted && phoneGranted) {
-            debugPrint('✅ PERMISSIONS GRANTED: Going to home screen');
+            print('✅ PERMISSIONS GRANTED: Going to home screen');
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(builder: (_) => const ChildHomeScreen()),
             );
           } else {
-            debugPrint('⚠️ PERMISSIONS MISSING: Going to permissions screen');
+            print('⚠️ PERMISSIONS MISSING: Going to permissions screen');
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(builder: (_) => const ChildPermissionsScreen()),
@@ -146,11 +146,11 @@ class _ChildScanQRScreenState extends State<ChildScanQRScreen> {
     
     // If child data is embedded in QR, use it directly
     if (embeddedChildData != null) {
-      debugPrint('✅ [ChildQR] Using embedded child data from QR');
+      print('✅ [ChildQR] Using embedded child data from QR');
       childData = embeddedChildData;
     } else {
       // Otherwise, show form dialog (fallback for old QR codes)
-      debugPrint('⚠️ [ChildQR] No embedded child data, showing form dialog');
+      print('⚠️ [ChildQR] No embedded child data, showing form dialog');
       childData = await showDialog<Map<String, dynamic>>(
         context: context,
         barrierDismissible: false,
@@ -184,7 +184,7 @@ class _ChildScanQRScreenState extends State<ChildScanQRScreen> {
       await prefs.setString('child_name', childData['name']);
       await prefs.setString('parent_uid', parentUid);
       await prefs.setString('child_uid', childUid);
-      debugPrint('Stored parent_uid: $parentUid, child_uid: $childUid');
+      print('Stored parent_uid: $parentUid, child_uid: $childUid');
 
       // Show success message
       ScaffoldMessenger.of(context).showSnackBar(
@@ -201,7 +201,7 @@ class _ChildScanQRScreenState extends State<ChildScanQRScreen> {
         MaterialPageRoute(builder: (_) => const ChildPermissionsScreen()),
       );
     } catch (e) {
-      debugPrint('Error linking to parent: $e');
+      print('Error linking to parent: $e');
       String errorMessage;
       if (ErrorMessageHelper.isNetworkError(e)) {
         errorMessage = ErrorMessageHelper.networkErrorLinking;
@@ -338,7 +338,7 @@ class _ChildScanQRScreenState extends State<ChildScanQRScreen> {
                 
                 // Gender Dropdown
                 DropdownButtonFormField<String>(
-                  initialValue: _selectedGender,
+                  value: _selectedGender,
                   decoration: const InputDecoration(
                     labelText: 'Gender',
                     border: OutlineInputBorder(),
@@ -466,11 +466,11 @@ class _ChildScanQRScreenState extends State<ChildScanQRScreen> {
     });
     
     try {
-      debugPrint('Scanned QR data: $raw'); // Debug log
+      print('Scanned QR data: $raw'); // Debug log
       
       // Use QRCodeService to parse the data (handles both JSON and plain string)
       Map<String, dynamic>? qrData = QRCodeService.jsonToData(raw);
-      debugPrint('QR parsing result: $qrData'); // Debug log
+      print('QR parsing result: $qrData'); // Debug log
       
       String? parentUid;
       Map<String, dynamic>? embeddedChildData;
@@ -482,7 +482,7 @@ class _ChildScanQRScreenState extends State<ChildScanQRScreen> {
           // New format: QR contains child data embedded
           parentUid = qrData['parentUid'];
           embeddedChildData = qrData['childData'] as Map<String, dynamic>?;
-          debugPrint('✅ [ChildQR] Found child_link QR with embedded child data');
+          print('✅ [ChildQR] Found child_link QR with embedded child data');
         } else if (qrData['type'] == 'user_profile') {
           // Parent profile QR code
           if (qrData['userType'] == 'parent') {
@@ -499,7 +499,7 @@ class _ChildScanQRScreenState extends State<ChildScanQRScreen> {
         // If JSON parsing failed, check if it's a plain Firebase UID
         // Firebase UIDs are typically 28 characters, alphanumeric with some special chars
         if (RegExp(r'^[a-zA-Z0-9_-]{20,}$').hasMatch(raw.trim())) {
-          debugPrint('Detected plain Firebase UID format: $raw');
+          print('Detected plain Firebase UID format: $raw');
           // Treat as direct Firebase parent UID
           parentUid = raw.trim();
         }
@@ -516,7 +516,7 @@ class _ChildScanQRScreenState extends State<ChildScanQRScreen> {
         return;
       }
       
-      debugPrint('Extracted parent UID: $parentUid'); // Debug log
+      print('Extracted parent UID: $parentUid'); // Debug log
       
       // Check if QR code has expired
       try {
@@ -589,7 +589,7 @@ class _ChildScanQRScreenState extends State<ChildScanQRScreen> {
           await _linkChildToParent(parentUid, embeddedChildData: embeddedChildData);
         }
       } catch (e) {
-        debugPrint('Error checking QR expiration: $e');
+        print('Error checking QR expiration: $e');
         // If error checking expiration, continue with linking (graceful degradation)
         if (ErrorMessageHelper.isNetworkError(e)) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -614,7 +614,7 @@ class _ChildScanQRScreenState extends State<ChildScanQRScreen> {
         _qrExpiresAt = null;
       });
       } catch (e) {
-      debugPrint('Error scanning QR: $e'); // Debug log
+      print('Error scanning QR: $e'); // Debug log
       String errorMessage;
       if (ErrorMessageHelper.isNetworkError(e)) {
         errorMessage = ErrorMessageHelper.networkErrorLinking;
@@ -815,7 +815,7 @@ class ChildHomeScreen extends StatelessWidget {
 
 // Old implementation kept for reference but not used
 class _ChildHomeScreenOld extends StatefulWidget {
-  const _ChildHomeScreenOld();
+  const _ChildHomeScreenOld({super.key});
 
   @override
   State<_ChildHomeScreenOld> createState() => _ChildHomeScreenOldState();
@@ -890,13 +890,13 @@ class _ChildHomeScreenOldState extends State<_ChildHomeScreenOld> {
         await _loadActiveSafeZones();
       }
     } catch (e) {
-      debugPrint('❌ Error loading user info: $e');
+      print('❌ Error loading user info: $e');
     }
   }
 
   Future<void> _initializeServices() async {
     try {
-      debugPrint('🚀 INITIALIZING CHILD SERVICES: Starting location and message monitoring...');
+      print('🚀 INITIALIZING CHILD SERVICES: Starting location and message monitoring...');
       
       // Initialize location tracking
       await _locationService.initializeLocationTracking();
@@ -905,7 +905,7 @@ class _ChildHomeScreenOldState extends State<_ChildHomeScreenOld> {
         _isLocationTracking = true;
       });
       
-      debugPrint('✅ LOCATION TRACKING: Started successfully');
+      print('✅ LOCATION TRACKING: Started successfully');
       
       // Initialize message monitoring
       await _initializeMessageMonitoring();
@@ -916,20 +916,20 @@ class _ChildHomeScreenOldState extends State<_ChildHomeScreenOld> {
       // Initialize URL and App Usage tracking for Firebase
       await _initializeDataCollection();
       
-      debugPrint('✅ CHILD SERVICES: All services initialized');
+      print('✅ CHILD SERVICES: All services initialized');
     } catch (e) {
-      debugPrint('❌ SERVICE INITIALIZATION ERROR: $e');
+      print('❌ SERVICE INITIALIZATION ERROR: $e');
     }
   }
 
   Future<void> _initializeMessageMonitoring() async {
     try {
-      debugPrint('🔍 INITIALIZING WORKMANAGER MESSAGE MONITORING: Starting background monitoring...');
+      print('🔍 INITIALIZING WORKMANAGER MESSAGE MONITORING: Starting background monitoring...');
       
       // Get parent ID from the linked parent
       final currentUser = FirebaseAuth.instance.currentUser;
       if (currentUser == null) {
-        debugPrint('❌ No current user found');
+        print('❌ No current user found');
         return;
       }
       
@@ -956,11 +956,11 @@ class _ChildHomeScreenOldState extends State<_ChildHomeScreenOld> {
       }
       
       if (parentId == null) {
-        debugPrint('❌ Child document not found in any parent\'s children collection');
+        print('❌ Child document not found in any parent\'s children collection');
         return;
       }
       
-      debugPrint('✅ Found child in parent: $parentId');
+      print('✅ Found child in parent: $parentId');
       
       // Start message monitoring (without WorkManager for now)
       final messageDataSource = MessageRemoteDataSourceImpl(
@@ -980,20 +980,20 @@ class _ChildHomeScreenOldState extends State<_ChildHomeScreenOld> {
         childId: currentUser.uid,
       );
       
-      debugPrint('✅ MESSAGE MONITORING: Started successfully');
-      debugPrint('✅ CALL LOG MONITORING: Started successfully');
+      print('✅ MESSAGE MONITORING: Started successfully');
+      print('✅ CALL LOG MONITORING: Started successfully');
     } catch (e) {
-      debugPrint('❌ WORKMANAGER MESSAGE MONITORING ERROR: $e');
+      print('❌ WORKMANAGER MESSAGE MONITORING ERROR: $e');
     }
   }
 
   Future<void> _initializeDataCollection() async {
     try {
-      debugPrint('🚀 INITIALIZING DATA COLLECTION: Starting URL and App Usage tracking...');
+      print('🚀 INITIALIZING DATA COLLECTION: Starting URL and App Usage tracking...');
       
       final currentUser = FirebaseAuth.instance.currentUser;
       if (currentUser == null) {
-        debugPrint('❌ No current user found for data collection');
+        print('❌ No current user found for data collection');
         return;
       }
       
@@ -1002,11 +1002,11 @@ class _ChildHomeScreenOldState extends State<_ChildHomeScreenOld> {
       String? parentId = prefs.getString('parent_uid');
       
       if (parentId == null || parentId.isEmpty) {
-        debugPrint('❌ Parent ID not found in SharedPreferences - skipping data collection initialization');
+        print('❌ Parent ID not found in SharedPreferences - skipping data collection initialization');
         return;
       }
       
-      debugPrint('✅ Found parent ID: $parentId');
+      print('✅ Found parent ID: $parentId');
       
       // Initialize real data collection (URL tracking + App Usage)
       await _dataCollectionService.initializeRealDataCollection(
@@ -1014,12 +1014,12 @@ class _ChildHomeScreenOldState extends State<_ChildHomeScreenOld> {
         parentId: parentId,
       );
       
-      debugPrint('✅ DATA COLLECTION: URL and App Usage tracking initialized successfully');
-      debugPrint('📊 Firebase Collections:');
-      debugPrint('   - visitedUrls: parents/$parentId/children/${currentUser.uid}/visitedUrls');
-      debugPrint('   - appUsage: parents/$parentId/children/${currentUser.uid}/appUsage');
+      print('✅ DATA COLLECTION: URL and App Usage tracking initialized successfully');
+      print('📊 Firebase Collections:');
+      print('   - visitedUrls: parents/$parentId/children/${currentUser.uid}/visitedUrls');
+      print('   - appUsage: parents/$parentId/children/${currentUser.uid}/appUsage');
     } catch (e) {
-      debugPrint('❌ DATA COLLECTION ERROR: $e');
+      print('❌ DATA COLLECTION ERROR: $e');
     }
   }
 
@@ -1033,7 +1033,7 @@ class _ChildHomeScreenOldState extends State<_ChildHomeScreenOld> {
     final childId = prefs.getString('child_uid') ?? FirebaseAuth.instance.currentUser?.uid;
 
     if (parentId == null || childId == null) {
-      debugPrint('❌ Unable to determine parent/child IDs for geofencing');
+      print('❌ Unable to determine parent/child IDs for geofencing');
       return false;
     }
 
@@ -1051,7 +1051,7 @@ class _ChildHomeScreenOldState extends State<_ChildHomeScreenOld> {
     if (!hasIds) return;
 
     try {
-      debugPrint('🚀 Initializing geofencing detection on child device...');
+      print('🚀 Initializing geofencing detection on child device...');
       final geofenceDataSource = GeofenceRemoteDataSourceImpl(
         firestore: FirebaseFirestore.instance,
       );
@@ -1068,7 +1068,7 @@ class _ChildHomeScreenOldState extends State<_ChildHomeScreenOld> {
       await _loadActiveSafeZones();
       _listenToZoneEvents();
     } catch (e) {
-      debugPrint('❌ Error starting geofencing monitoring: $e');
+      print('❌ Error starting geofencing monitoring: $e');
     }
   }
 
@@ -1079,7 +1079,7 @@ class _ChildHomeScreenOldState extends State<_ChildHomeScreenOld> {
     try {
       await _geofencingService?.stopGeofencingMonitoring();
     } catch (e) {
-      debugPrint('⚠️ Error stopping geofencing monitoring: $e');
+      print('⚠️ Error stopping geofencing monitoring: $e');
     }
 
     setState(() {
@@ -1119,21 +1119,21 @@ class _ChildHomeScreenOldState extends State<_ChildHomeScreenOld> {
               .map((doc) => GeofenceZoneModel.fromFirestore(doc.data(), doc.id))
               .toList();
 
-          debugPrint('📍 [ChildApp] Loaded ${zones.length} active safe zones');
+          print('📍 [ChildApp] Loaded ${zones.length} active safe zones');
           setState(() {
             _activeZones = zones;
             _isLoadingZones = false;
           });
         },
         onError: (error) {
-          debugPrint('❌ Error loading active safe zones: $error');
+          print('❌ Error loading active safe zones: $error');
           setState(() {
             _isLoadingZones = false;
           });
         },
       );
     } catch (e) {
-      debugPrint('❌ Error setting up safe zones listener: $e');
+      print('❌ Error setting up safe zones listener: $e');
       setState(() {
         _isLoadingZones = false;
       });
@@ -1186,7 +1186,7 @@ class _ChildHomeScreenOldState extends State<_ChildHomeScreenOld> {
           _zoneStatusById[event.zoneId] = event.eventType;
         }
       },
-      onError: (error) => debugPrint('❌ Error listening to zone events: $error'),
+      onError: (error) => print('❌ Error listening to zone events: $error'),
     );
   }
 
@@ -1737,4 +1737,3 @@ class _ChildHomeScreenOldState extends State<_ChildHomeScreenOld> {
   }
 
 }
-

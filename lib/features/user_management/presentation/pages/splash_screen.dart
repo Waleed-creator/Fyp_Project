@@ -151,6 +151,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:parental_control_app/features/user_management/presentation/pages/user_type_selection_screen.dart';
 import 'package:parental_control_app/features/user_management/presentation/pages/home_screen.dart';
+import 'package:parental_control_app/features/messaging/presentation/pages/child_app_main_screen.dart'; // ✅ add
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -168,7 +169,6 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> _checkAuthState() async {
-    // Small delay for native splash
     await Future.delayed(const Duration(seconds: 2));
 
     if (!mounted) return;
@@ -176,9 +176,7 @@ class _SplashScreenState extends State<SplashScreen> {
     try {
       final currentUser = FirebaseAuth.instance.currentUser;
 
-      // ✅ User already logged in
       if (currentUser != null) {
-
         final prefs = await SharedPreferences.getInstance();
         final userType = prefs.getString('user_type');
 
@@ -187,60 +185,42 @@ class _SplashScreenState extends State<SplashScreen> {
 
         if (!mounted) return;
 
-        // ✅ Parent Home
         if (userType == 'parent') {
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(
-              builder: (_) => const ParentHomeScreen(),
-            ),
+            MaterialPageRoute(builder: (_) => const ParentHomeScreen()),
           );
           return;
         }
 
-        // ✅ Child Home (future)
-        // if (userType == 'child') {
-        //   Navigator.pushReplacement(
-        //     context,
-        //     MaterialPageRoute(
-        //       builder: (_) => const ChildHomeScreen(),
-        //     ),
-        //   );
-        //   return;
-        // }
+        // ✅ Child navigation uncomment kiya
+        if (userType == 'child') {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => const ChildAppMainScreen()),
+          );
+          return;
+        }
       }
 
-      // ❌ Not logged in
       if (!mounted) return;
-
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(
-          builder: (_) => const UserTypeSelectionScreen(),
-        ),
+        MaterialPageRoute(builder: (_) => const UserTypeSelectionScreen()),
       );
 
     } catch (e) {
-
       debugPrint('❌ Splash auth error: $e');
-
       if (!mounted) return;
-
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(
-          builder: (_) => const UserTypeSelectionScreen(),
-        ),
+        MaterialPageRoute(builder: (_) => const UserTypeSelectionScreen()),
       );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-
-    // Empty screen because native splash already showing
-    return const Scaffold(
-      body: SizedBox(),
-    );
+    return const Scaffold(body: SizedBox());
   }
 }
