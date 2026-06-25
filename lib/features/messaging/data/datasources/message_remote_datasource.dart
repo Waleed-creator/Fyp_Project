@@ -489,7 +489,7 @@ class MessageRemoteDataSourceImpl {
 
     // Continue with normal toxic content analysis
     final urls = [
-      'http://10.158.246.219:5000',
+      // 'http://10.158.246.219:5000',
       'https://quintuple-unbraided-urgency.ngrok-free.dev/analyze',
     ];
 
