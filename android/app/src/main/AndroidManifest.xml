@@ -135,7 +135,10 @@
         <!-- Google Maps API key -->
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="AIzaSyAb9fGsY2wIbMUyIgHDTDU0L_UJ5-GeVho"/>
+            android:value="AIzaSyCHLWzE3dMhSMeIPUw6ATvcWIvFEvlUznU"/>
+
+            <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
     </application>
 
     <queries>
